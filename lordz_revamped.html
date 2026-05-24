@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<!-- saved from url=(0017)https://lordz.io/ -->
+<!-- ============================================================ -->
+<!--  LORDZ.IO REVAMPED                                           -->
+<!--  Music: Kevin MacLeod (incompetech.com)                      -->
+<!--  Licensed under Creative Commons: By Attribution 4.0         -->
+<!--  https://creativecommons.org/licenses/by/4.0/                -->
+<!-- ============================================================ -->
+<html lang="en-us">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="description" content="Online Medieval Warfare">
+  <title>Lordz.io — Revamped</title>
+  <link rel="shortcut icon" href="https://lordz.io/TemplateData/Lordzfavicon.ico">
+
+  <!-- Original game scripts (keep these, game needs them) -->
+  <script src="https://lordz.io/TemplateData/UnityProgress.js"></script>
+  <script src="https://lordz.io/Build/UnityLoader.js"></script>
+  <script src="https://lordz.io/TemplateData/UnitySpinbot.js"></script>
+
+  <style>
+    /* ============================================================
+       BASE RESET & LAYOUT
+    ============================================================ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0804;
+      overflow: hidden;
+      font-family: 'Palatino Linotype', Palatino, Georgia, serif;
+    }
+
+    /* ============================================================
+       GAME CONTAINER — unchanged so Unity renders correctly
+    ============================================================ */
+    #gameContainer {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url("https://lordz.io/Build/lordz.io.jpg") center center / cover;
+    }
+
+    #gameContainer canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* ============================================================
+       HIDE ALL AD DIVS
+    ============================================================ */
+    #lordz-io_728x90,
+    #lordz-io_970x250,
+    #lordz-io_300x250,
+    #preroll,
+    #IOG_CP,
+    #hud-intro,
+    .webgl-content > *:not(#gameContainer) {
+      display: none !important;
+      visibility: hidden !important;
+    }
+
+    /* ============================================================
+       MOD HUD — music controls + now playing, top right
+    ============================================================ */
+    #revamped-hud {
+      position: fixed;
+      top: 12px;
+      right: 14px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    #music-panel {
+      pointer-events: all;
+      background: rgba(8, 5, 2, 0.82);
+      border: 1px solid #5a3d0a;
+      border-radius: 6px;
+      padding: 7px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    }
+
+    #music-panel button {
+      background: none;
+      border: none;
+      color: #c8a84a;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+
+    #music-panel button:hover { color: #f0d070; }
+
+    #now-playing {
+      font-size: 11px;
+      color: #a08030;
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0.5px;
+    }
+
+    #volume-slider {
+      -webkit-appearance: none;
+      width: 70px;
+      height: 3px;
+      background: #3a2a0a;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    #volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 10px;
+      height: 10px;
+      background: #c8a84a;
+      border-radius: 50%;
+    }
+
+    /* ============================================================
+       LOADING SCREEN (shows while Unity loads)
+    ============================================================ */
+    #revamped-loading {
+      position: fixed;
+      inset: 0;
+      background: #0a0804;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      transition: opacity 1s ease;
+    }
+
+    #revamped-loading img {
+      width: 260px;
+      filter: drop-shadow(0 0 20px rgba(200,168,74,0.4));
+    }
+
+    #revamped-loading .loading-text {
+      color: #c8a84a;
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    #revamped-loading .loading-bar-wrap {
+      width: 260px;
+      height: 3px;
+      background: #1a1206;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    #revamped-loading .loading-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #8a5a10, #f0c040, #8a5a10);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s linear infinite;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       LOADING SCREEN
+  ============================================================ -->
+  <div id="revamped-loading">
+    <img src="https://lordz.io/TemplateData/logo.png" alt="Lordz.io">
+    <div class="loading-bar-wrap">
+      <div class="loading-bar-fill" id="loading-bar"></div>
+    </div>
+    <div class="loading-text">Loading Revamped...</div>
+  </div>
+
+  <!-- ============================================================
+       GAME CONTAINER
+  ============================================================ -->
+  <div class="webgl-content">
+    <div id="gameContainer">
+      <canvas id="#canvas" style="cursor: default;"></canvas>
+      <div class="logo Dark" style="display:none;"></div>
+      <div class="progress Dark" style="display:none;">
+        <div class="empty" style="width:0%;"></div>
+        <div class="full" style="width:100%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden ad divs (kept so game scripts don't error, just hidden) -->
+  <div id="lordz-io_728x90" style="display:none!important;"></div>
+  <div id="lordz-io_970x250" style="display:none!important;"></div>
+  <div id="lordz-io_300x250" style="display:none!important;"></div>
+  <div id="preroll" style="display:none!important;"></div>
+  <div id="hud-intro" style="display:none!important;"></div>
+  <div id="IOG_CP" style="display:none!important;"></div>
+  <div id="fb-root"></div>
+
+  <!-- ============================================================
+       MOD HUD
+  ============================================================ -->
+  <div id="revamped-hud">
+    <div id="music-panel">
+      <button id="btn-prev" title="Previous">⏮</button>
+      <button id="btn-play" title="Play/Pause">⏸</button>
+      <button id="btn-next" title="Next">⏭</button>
+      <span id="now-playing">Loading music...</span>
+      <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.4">
+    </div>
+  </div>
+
+  <!-- ============================================================
+       UNITY LOADER
+  ============================================================ -->
+  <script>
+    var gameInstance = UnityLoader.instantiate(
+      "gameContainer",
+      "https://lordz.io/Build/lordz.io.json",
+      {
+        onProgress: function(instance, progress) {
+          var bar = document.getElementById('loading-bar');
+          if (bar) bar.style.width = (progress * 100) + '%';
+          if (progress >= 1) {
+            setTimeout(function() {
+              var screen = document.getElementById('revamped-loading');
+              if (screen) {
+                screen.style.opacity = '0';
+                setTimeout(function() { screen.style.display = 'none'; }, 1000);
+              }
+            }, 500);
+          }
+        }
+      }
+    );
+  </script>
+
+  <!-- ============================================================
+       MOD SCRIPT — Music, Voicelines, SFX
+  ============================================================ -->
+  <script>
+  (function() {
+
+    // ==========================================================
+    // SETTINGS — edit these to tweak behaviour
+    // ==========================================================
+    var SETTINGS = {
+      MUSIC_VOLUME:     0.35,   // 0.0 to 1.0
+      VOICE_VOLUME:     0.75,
+      SFX_VOLUME:       0.6,
+      IDLE_MIN_SECS:    180,    // minimum seconds between idle lines
+      IDLE_MAX_SECS:    360,    // maximum seconds between idle lines
+      MUSIC_FADE_SECS:  2.0,    // crossfade duration in seconds
+    };
+
+    // ==========================================================
+    // GITHUB BASE URL
+    // ==========================================================
+    var BASE = 'https://raw.githubusercontent.com/rohdenmagnus139-debug/lordz.io_revamped/main/audio/';
+
+    // ==========================================================
+    // MUSIC PLAYLIST
+    // ==========================================================
+    var PLAYLIST = [
+      { title: 'Folk Round',       file: BASE + 'music/folk_round.mp3' },
+      { title: 'Clash Defiant',    file: BASE + 'music/clash_defiant.mp3' },
+      { title: 'Heroic Age',       file: BASE + 'music/heroic_age.mp3' },
+      { title: 'The Pyre',         file: BASE + 'music/the_pyre.mp3' },
+      { title: 'Lord of the Land', file: BASE + 'music/lord_of_the_land.mp3' },
+    ];
+
+    // ==========================================================
+    // VOICELINES
+    // Format: { spawn: [...], attack: [...], idle: [...] }
+    // ==========================================================
+    var VOICES = {
+      // T key — Clubman
+      t: {
+        folder: 'clubman', prefix: 'club',
+        spawn:  [1, 2, 3],
+        attack: [1, 2],
+        idle:   [1]
+      },
+      // Y key — Swordsman
+      y: {
+        folder: 'swordsman', prefix: 'swordsman',
+        spawn:  [1, 2, 3],
+        attack: [1, 2],
+        idle:   [1]
+      },
+      // U key — Archer
+      u: {
+        folder: 'archer', prefix: 'archer',
+        spawn:  [1, 2, 3],
+        attack: [1, 2],
+        idle:   [1]
+      },
+      // I key — Axe Man
+      i: {
+        folder: 'axeman', prefix: 'axe',
+        spawn:  [1, 2, 3],
+        attack: [1, 2],
+        idle:   [1]
+      },
+      // M key — Mage
+      m: {
+        folder: 'mage', prefix: 'mage',
+        spawn:  [1, 2, 3],
+        attack: [1, 2],
+        idle:   [1]
+      },
+      // O key — Dragon
+      o: {
+        folder: 'dragon', prefix: 'dragon',
+        spawn:  [1, 2, 3],
+        attack: [1, 2],
+        idle:   [1]
+      },
+      // P key — Ballista
+      p: {
+        folder: 'ballista', prefix: 'ballista',
+        spawn:  [1, 2, 3],
+        attack: [1, 2],
+        idle:   [1]
+      },
+      // S key — Bomber
+      s: {
+        folder: 'bomber', prefix: 'bomb',
+        spawn:  [1, 2, 3],
+        attack: [1, 2],
+        idle:   [1]
+      },
+      // K key — Ogre
+      k: {
+        folder: 'ogre', prefix: 'ogre',
+        spawn:  [1, 2, 3],
+        attack: [1, 2],
+        idle:   [1]
+      },
+    };
+
+    // Hero order lines (mouse click)
+    var HERO_ATTACK = [
+      BASE + 'hero/hero_attack1.mp3',
+      BASE + 'hero/hero_attack2.mp3',
+    ];
+    var HERO_IDLE = [
+      BASE + 'hero/hero_idle1.mp3',
+      BASE + 'hero/hero_idle2.mp3',
+    ];
+
+    // Buildings (C E R F) — no voicelines, just SFX
+    var BUILDINGS = ['c','e','r','f'];
+
+    // ==========================================================
+    // HELPER — build URL from voice entry + type + number
+    // ==========================================================
+    function voiceUrl(entry, type, num) {
+      return BASE + entry.folder + '/' + entry.prefix + '_' + type + num + '.mp3';
+    }
+
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // ==========================================================
+    // AUDIO PLAYER HELPER
+    // ==========================================================
+    function playAudio(url, volume) {
+      var a = new Audio(url);
+      a.volume = volume !== undefined ? volume : SETTINGS.VOICE_VOLUME;
+      a.play().catch(function(){});
+    }
+
+    // ==========================================================
+    // MUSIC PLAYER
+    // ==========================================================
+    var Music = (function() {
+      var tracks = shuffle(PLAYLIST.slice());
+      var idx = 0;
+      var current = null;
+      var paused = false;
+      var vol = SETTINGS.MUSIC_VOLUME;
+
+      function shuffle(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+      }
+
+      function updateUI(title) {
+        var el = document.getElementById('now-playing');
+        if (el) el.textContent = title || '';
+      }
+
+      function playTrack(i) {
+        idx = ((i % tracks.length) + tracks.length) % tracks.length;
+        if (current) {
+          current.pause();
+          current = null;
+        }
+        var track = tracks[idx];
+        current = new Audio(track.file);
+        current.volume = vol;
+        current.play().catch(function(){});
+        updateUI('♪ ' + track.title);
+        current.addEventListener('ended', function() {
+          playTrack(idx + 1);
+        });
+      }
+
+      function init() {
+        playTrack(0);
+        document.getElementById('btn-play').addEventListener('click', function() {
+          if (!current) return;
+          if (paused) {
+            current.play();
+            this.textContent = '⏸';
+            paused = false;
+          } else {
+            current.pause();
+            this.textContent = '▶';
+            paused = true;
+          }
+        });
+        document.getElementById('btn-next').addEventListener('click', function() {
+          playTrack(idx + 1);
+          paused = false;
+          document.getElementById('btn-play').textContent = '⏸';
+        });
+        document.getElementById('btn-prev').addEventListener('click', function() {
+          playTrack(idx - 1);
+          paused = false;
+          document.getElementById('btn-play').textContent = '⏸';
+        });
+        document.getElementById('volume-slider').addEventListener('input', function() {
+          vol = parseFloat(this.value);
+          if (current) current.volume = vol;
+        });
+      }
+
+      return { init: init };
+    })();
+
+    // ==========================================================
+    // WEB AUDIO SFX
+    // ==========================================================
+    var SFX = (function() {
+      function ac() { return new (window.AudioContext || window.webkitAudioContext)(); }
+
+      function thwack() {
+        var c = ac();
+        var buf = c.createBuffer(1, c.sampleRate * 0.15, c.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 2);
+        var src = c.createBufferSource(); src.buffer = buf;
+        var g = c.createGain(); g.gain.setValueAtTime(SETTINGS.SFX_VOLUME * 1.8, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.15);
+        var f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 800;
+        src.connect(f); f.connect(g); g.connect(c.destination); src.start();
+        var o = c.createOscillator(); var g2 = c.createGain();
+        o.frequency.setValueAtTime(120, c.currentTime);
+        o.frequency.exponentialRampToValueAtTime(40, c.currentTime + 0.1);
+        g2.gain.setValueAtTime(SETTINGS.SFX_VOLUME, c.currentTime);
+        g2.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.1);
+        o.connect(g2); g2.connect(c.destination); o.start(); o.stop(c.currentTime + 0.1);
+      }
+
+      function arrow() {
+        var c = ac();
+        var buf = c.createBuffer(1, c.sampleRate * 0.3, c.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < d.length; i++) { var t = i/d.length; d[i] = (Math.random()*2-1) * Math.sin(t*Math.PI); }
+        var src = c.createBufferSource(); src.buffer = buf;
+        var f = c.createBiquadFilter(); f.type='bandpass';
+        f.frequency.setValueAtTime(2000,c.currentTime);
+        f.frequency.exponentialRampToValueAtTime(800, c.currentTime+0.3); f.Q.value=3;
+        var g = c.createGain(); g.gain.setValueAtTime(SETTINGS.SFX_VOLUME, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime+0.3);
+        src.connect(f); f.connect(g); g.connect(c.destination); src.start();
+      }
+
+      function explosion() {
+        var c = ac();
+        // crack
+        var cr = c.createBuffer(1, c.sampleRate*0.05, c.sampleRate);
+        var cd = cr.getChannelData(0);
+        for (var i=0;i<cd.length;i++) cd[i]=Math.random()*2-1;
+        var cs = c.createBufferSource(); cs.buffer = cr;
+        var cg = c.createGain(); cg.gain.setValueAtTime(2.0,c.currentTime); cg.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.05);
+        cs.connect(cg); cg.connect(c.destination); cs.start();
+        // body
+        var buf = c.createBuffer(1,c.sampleRate*1.0,c.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.2);
+        var src=c.createBufferSource(); src.buffer=buf;
+        var f=c.createBiquadFilter(); f.type='lowpass';
+        f.frequency.setValueAtTime(600,c.currentTime+0.02);
+        f.frequency.exponentialRampToValueAtTime(100,c.currentTime+1.0);
+        var g=c.createGain(); g.gain.setValueAtTime(SETTINGS.SFX_VOLUME*2.5,c.currentTime+0.02);
+        g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+1.0);
+        src.connect(f); f.connect(g); g.connect(c.destination); src.start(c.currentTime+0.02);
+        var o=c.createOscillator(); var og=c.createGain();
+        o.frequency.setValueAtTime(60,c.currentTime); o.frequency.exponentialRampToValueAtTime(15,c.currentTime+0.6);
+        og.gain.setValueAtTime(1.2,c.currentTime); og.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.6);
+        o.connect(og); og.connect(c.destination); o.start(); o.stop(c.currentTime+0.6);
+      }
+
+      function ballista() {
+        var c = ac();
+        var thunk = c.createBuffer(1,c.sampleRate*0.08,c.sampleRate);
+        var td = thunk.getChannelData(0);
+        for(var i=0;i<td.length;i++) td[i]=(Math.random()*2-1)*Math.pow(1-i/td.length,4);
+        var ts=c.createBufferSource(); ts.buffer=thunk;
+        var tf=c.createBiquadFilter(); tf.type='lowpass'; tf.frequency.value=300;
+        var tg=c.createGain(); tg.gain.setValueAtTime(SETTINGS.SFX_VOLUME*3,c.currentTime);
+        tg.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.08);
+        ts.connect(tf); tf.connect(tg); tg.connect(c.destination); ts.start();
+        setTimeout(function(){
+          var c2=ac();
+          var buf=c2.createBuffer(1,c2.sampleRate*0.9,c2.sampleRate);
+          var d=buf.getChannelData(0);
+          for(var i=0;i<d.length;i++){var t=i/d.length; var env=t<0.05?t/0.05:Math.pow(1-(t-0.05)/0.95,1.8); d[i]=(Math.random()*2-1)*env;}
+          var src=c2.createBufferSource(); src.buffer=buf;
+          var f=c2.createBiquadFilter(); f.type='bandpass';
+          f.frequency.setValueAtTime(500,c2.currentTime); f.frequency.exponentialRampToValueAtTime(120,c2.currentTime+0.9); f.Q.value=1.5;
+          var g=c2.createGain(); g.gain.setValueAtTime(SETTINGS.SFX_VOLUME*1.8,c2.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.001,c2.currentTime+0.9);
+          src.connect(f); f.connect(g); g.connect(c2.destination); src.start();
+        }, 80);
+      }
+
+      function axeChop() {
+        var c = ac();
+        var cr=c.createBuffer(1,c.sampleRate*0.03,c.sampleRate);
+        var cd=cr.getChannelData(0); for(var i=0;i<cd.length;i++) cd[i]=Math.random()*2-1;
+        var cs=c.createBufferSource(); cs.buffer=cr;
+        var cf=c.createBiquadFilter(); cf.type='highpass'; cf.frequency.value=600;
+        var cg=c.createGain(); cg.gain.setValueAtTime(SETTINGS.SFX_VOLUME*2.5,c.currentTime);
+        cg.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.03);
+        cs.connect(cf); cf.connect(cg); cg.connect(c.destination); cs.start();
+        var buf=c.createBuffer(1,c.sampleRate*0.25,c.sampleRate);
+        var d=buf.getChannelData(0);
+        for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.5);
+        var src=c.createBufferSource(); src.buffer=buf;
+        var f=c.createBiquadFilter(); f.type='lowpass';
+        f.frequency.setValueAtTime(900,c.currentTime); f.frequency.exponentialRampToValueAtTime(200,c.currentTime+0.25);
+        var g=c.createGain(); g.gain.setValueAtTime(SETTINGS.SFX_VOLUME*2,c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.25);
+        src.connect(f); f.connect(g); g.connect(c.destination); src.start();
+        var o=c.createOscillator(); var og=c.createGain();
+        o.type='sine'; o.frequency.setValueAtTime(100,c.currentTime); o.frequency.exponentialRampToValueAtTime(35,c.currentTime+0.2);
+        og.gain.setValueAtTime(SETTINGS.SFX_VOLUME*1.5,c.currentTime); og.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.2);
+        o.connect(og); og.connect(c.destination); o.start(); o.stop(c.currentTime+0.2);
+      }
+
+      function mageOrb() {
+        var c = ac();
+        var buf=c.createBuffer(1,c.sampleRate*0.4,c.sampleRate);
+        var d=buf.getChannelData(0);
+        for(var i=0;i<d.length;i++){var t=i/d.length; d[i]=(Math.random()*2-1)*Math.pow(Math.sin(t*Math.PI),0.5);}
+        var src=c.createBufferSource(); src.buffer=buf;
+        var f=c.createBiquadFilter(); f.type='bandpass';
+        f.frequency.setValueAtTime(300,c.currentTime); f.frequency.exponentialRampToValueAtTime(1200,c.currentTime+0.2);
+        f.frequency.exponentialRampToValueAtTime(400,c.currentTime+0.4); f.Q.value=2;
+        var g=c.createGain(); g.gain.setValueAtTime(SETTINGS.SFX_VOLUME*0.8,c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.4);
+        src.connect(f); f.connect(g); g.connect(c.destination); src.start();
+        var o=c.createOscillator(); var og=c.createGain(); o.type='sine';
+        o.frequency.setValueAtTime(180,c.currentTime); o.frequency.exponentialRampToValueAtTime(90,c.currentTime+0.4);
+        og.gain.setValueAtTime(SETTINGS.SFX_VOLUME*0.6,c.currentTime); og.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.4);
+        o.connect(og); og.connect(c.destination); o.start(); o.stop(c.currentTime+0.4);
+      }
+
+      function mageImpact() {
+        var c = ac();
+        var o=c.createOscillator(); var og=c.createGain(); o.type='sine';
+        o.frequency.setValueAtTime(300,c.currentTime); o.frequency.exponentialRampToValueAtTime(60,c.currentTime+0.3);
+        og.gain.setValueAtTime(SETTINGS.SFX_VOLUME*1.5,c.currentTime); og.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.3);
+        o.connect(og); og.connect(c.destination); o.start(); o.stop(c.currentTime+0.3);
+        [600,900,1400,2100].forEach(function(freq,i){
+          var os=c.createOscillator(); var gs=c.createGain(); os.type='sine'; os.frequency.value=freq;
+          gs.gain.setValueAtTime(0.12/(i+1),c.currentTime); gs.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.5+i*0.1);
+          os.connect(gs); gs.connect(c.destination); os.start(); os.stop(c.currentTime+0.5+i*0.1);
+        });
+      }
+
+      // SFX map — which key triggers which sfx on attack
+      var SFX_MAP = {
+        t: thwack,    // clubman — wood thwack
+        y: function() { thwack(); },  // swordsman — also thwack variant
+        u: arrow,     // archer — arrow whoosh
+        i: axeChop,   // axe man — axe chop
+        m: function() { mageOrb(); setTimeout(mageImpact, 400); }, // mage — orb + impact
+        o: null,      // dragon — real sample (future update)
+        p: ballista,  // ballista
+        s: explosion, // bomber — explosion
+        k: explosion, // ogre — same explosion (agreed)
+      };
+
+      return {
+        play: function(key) {
+          var fn = SFX_MAP[key];
+          if (fn) fn();
+        }
+      };
+    })();
+
+    // ==========================================================
+    // VOICELINE SYSTEM
+    // ==========================================================
+    var VoiceSystem = (function() {
+
+      // throttle so same unit can't spam voicelines
+      var lastPlayed = {};
+      var COOLDOWN_MS = 800;
+
+      function playVoice(url) {
+        playAudio(url, SETTINGS.VOICE_VOLUME);
+      }
+
+      function onSpawn(key) {
+        var entry = VOICES[key];
+        if (!entry) return;
+        var now = Date.now();
+        if (lastPlayed[key] && now - lastPlayed[key] < COOLDOWN_MS) return;
+        lastPlayed[key] = now;
+        var num = pickRandom(entry.spawn);
+        playVoice(voiceUrl(entry, 'spawn', num));
+      }
+
+      function onAttack(key) {
+        var entry = VOICES[key];
+        if (!entry) return;
+        var num = pickRandom(entry.attack);
+        playVoice(voiceUrl(entry, 'attack', num));
+        SFX.play(key);
+      }
+
+      function onHeroAttack() {
+        playVoice(pickRandom(HERO_ATTACK));
+      }
+
+      // Idle system — fires a random unit's idle line every few minutes
+      function scheduleIdle() {
+        var minMs = SETTINGS.IDLE_MIN_SECS * 1000;
+        var maxMs = SETTINGS.IDLE_MAX_SECS * 1000;
+        var delay = minMs + Math.random() * (maxMs - minMs);
+        setTimeout(function() {
+          var keys = Object.keys(VOICES);
+          var key = pickRandom(keys);
+          var entry = VOICES[key];
+          playVoice(voiceUrl(entry, 'idle', pickRandom(entry.idle)));
+          scheduleIdle();
+        }, delay);
+      }
+
+      // Occasionally play hero idle lines too
+      function scheduleHeroIdle() {
+        var delay = (SETTINGS.IDLE_MIN_SECS * 1.5 + Math.random() * SETTINGS.IDLE_MAX_SECS) * 1000;
+        setTimeout(function() {
+          playVoice(pickRandom(HERO_IDLE));
+          scheduleHeroIdle();
+        }, delay);
+      }
+
+      return {
+        onSpawn: onSpawn,
+        onAttack: onAttack,
+        onHeroAttack: onHeroAttack,
+        startIdle: function() { scheduleIdle(); scheduleHeroIdle(); }
+      };
+    })();
+
+    // ==========================================================
+    // INPUT LISTENERS
+    // ==========================================================
+    var keysDown = {};
+
+    document.addEventListener('keydown', function(e) {
+      var key = e.key.toLowerCase();
+      if (keysDown[key]) return; // prevent key repeat
+      keysDown[key] = true;
+
+      // Building keys — no voiceline, maybe a build sound later
+      if (BUILDINGS.indexOf(key) !== -1) return;
+
+      // Unit spawn keys
+      if (VOICES[key]) {
+        VoiceSystem.onSpawn(key);
+      }
+    });
+
+    document.addEventListener('keyup', function(e) {
+      keysDown[e.key.toLowerCase()] = false;
+    });
+
+    // Mouse click — hero attack order
+    // Only fires on clicks on the game canvas
+    var canvas = document.querySelector('#gameContainer canvas');
+    if (canvas) {
+      canvas.addEventListener('mousedown', function(e) {
+        if (e.button === 0) { // left click only
+          VoiceSystem.onHeroAttack();
+          // also play attack SFX for whatever unit was last spawned
+          // (rough approximation — fires attack sound on click)
+        }
+      });
+    }
+
+    // ==========================================================
+    // INIT — wait for user interaction then start everything
+    // ==========================================================
+    var started = false;
+    function startMod() {
+      if (started) return;
+      started = true;
+      Music.init();
+      VoiceSystem.startIdle();
+    }
+
+    // Browsers require user gesture before audio plays
+    document.addEventListener('click', startMod, { once: true });
+    document.addEventListener('keydown', startMod, { once: true });
+
+  })();
+  </script>
+
+</body>
+</html>
